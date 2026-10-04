@@ -86,10 +86,10 @@
 				};
 			};
 			buildConfigurationList = A1000000000000000000E1 /* Build configuration list for PBXProject "LivasideSpike" */;
-			developmentRegion = en;
+			developmentRegion = fr;
 			hasScannedForEncodings = 0;
 			knownRegions = (
-				en,
+				fr,
 				Base,
 			);
 			mainGroup = A1000000000000000000A0;

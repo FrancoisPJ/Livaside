@@ -55,7 +55,8 @@ extension View {
     /// Fond `bg` derrière une `List` ou un `Form`.
     func themedList() -> some View {
         scrollContentBackground(.hidden)
-            .background(Theme.bg)
+            // Le fond passe sous le clavier et la barre d'onglets : sans ça, une bande noire apparaît en sombre.
+            .background(Theme.bg.ignoresSafeArea())
             .foregroundStyle(Theme.ink)
     }
 

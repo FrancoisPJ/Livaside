@@ -20,13 +20,41 @@ struct LivasideRootView: View {
         .tint(Theme.sauge)
     }
 
-    /// Captures d'écran : `-captureTab trends` ouvre directement un onglet (build Debug seulement).
-    private static var initialTab: String {
-        #if DEBUG
-        UserDefaults.standard.string(forKey: "captureTab") ?? "today"
-        #else
-        "today"
-        #endif
+    private static var initialTab: String { Capture.tab ?? "today" }
+}
+
+/// Réglages des captures d'écran, lus dans les arguments de lancement (build Debug seulement) :
+/// `-captureTab today|meal|trends` ouvre un onglet, `-captureMode YES` masque le bandeau de démo,
+/// `-captureScroll end` cale la liste en bas, `-captureRange 30` choisit la période des tendances,
+/// `-captureKeyboard NO` ouvre « Ajouter un repas » sans clavier.
+private enum Capture {
+    #if DEBUG
+    static let tab = UserDefaults.standard.string(forKey: "captureTab")
+    static let isActive = UserDefaults.standard.bool(forKey: "captureMode")
+    static let scrollsToEnd = UserDefaults.standard.string(forKey: "captureScroll") == "end"
+    static let range = UserDefaults.standard.integer(forKey: "captureRange")
+    static let showsKeyboard = UserDefaults.standard.string(forKey: "captureKeyboard") != "NO"
+    #else
+    static let tab: String? = nil
+    static let isActive = false
+    static let scrollsToEnd = false
+    static let range = 0
+    static let showsKeyboard = true
+    #endif
+    static let endID = "capture-end"
+}
+
+private extension View {
+    /// `-captureScroll end` : cale la liste sur sa dernière ligne (`Capture.endID`), au-dessus de la barre d'onglets.
+    func scrollsToEndForCapture() -> some View {
+        ScrollViewReader { proxy in
+            task {
+                guard Capture.scrollsToEnd else { return }
+                // La liste doit être en place, sinon le défilement est ignoré.
+                try? await Task.sleep(for: .milliseconds(500))
+                proxy.scrollTo(Capture.endID, anchor: .bottom)
+            }
+        }
     }
 }
 
@@ -44,6 +72,8 @@ private struct TodayView: View {
     private var todayMeals: [Meal] {
         meals.filter { LivasideDate.calendar.isDateInToday($0.date) }
     }
+
+    private var showsDemoBanner: Bool { demoMode && !Capture.isActive }
 
     var body: some View {
         NavigationStack {
@@ -72,12 +102,12 @@ private struct TodayView: View {
                             .accessibilityLabel("Synchroniser Apple Health")
                         }
                     }
-                    .cardRow(demoMode || health.problem != nil ? .top : .single)
-                    if demoMode {
+                    .cardRow(showsDemoBanner || (!demoMode && health.problem != nil) ? .top : .single)
+                    if showsDemoBanner {
                         Label("Mode démo : données fictives", systemImage: "theatermasks.fill")
                             .font(.caption).foregroundStyle(Theme.inkSoft)
                             .cardRow(.bottom)
-                    } else if let problem = health.problem {
+                    } else if !demoMode, let problem = health.problem {
                         Text(problem).font(.caption).foregroundStyle(Theme.inkSoft)
                             .cardRow(.bottom)
                     }
@@ -126,10 +156,12 @@ private struct TodayView: View {
                                 .font(Theme.number(.title3))
                         }
                         .cardRow(.bottom)
+                        .id(Capture.endID)
                     }
                 } header: { SectionTitle("Repas") }
             }
             .themedList()
+            .scrollsToEndForCapture()
             .navigationTitle("Aujourd’hui")
             .toolbar {
                 Menu {
@@ -238,16 +270,12 @@ private struct AddMealView: View {
                     Button("Enregistrer", action: save)
                         .disabled(!canSave)
                 }
-                ToolbarItemGroup(placement: .keyboard) {
-                    Spacer()
-                    Button("Enregistrer", action: save).disabled(!canSave)
-                }
             }
             .onAppear {
                 // L'onglet reste en mémoire : sans ça, un repas saisi à midi garderait l'heure du matin.
                 date = .now
                 lastSaved = nil
-                focus = .name
+                if Capture.showsKeyboard { focus = .name }
             }
         }
     }
@@ -291,7 +319,7 @@ private struct AddMealView: View {
 
 private struct TrendsView: View {
     @Query(sort: \DailyHealthSnapshot.day) private var snapshots: [DailyHealthSnapshot]
-    @State private var range = 7
+    @State private var range = Capture.range == 30 ? 30 : 7
 
     private var data: [DailyHealthSnapshot] {
         let today = LivasideDate.startOfDay(.now)
@@ -332,9 +360,11 @@ private struct TrendsView: View {
                     Text("Charge d’entraînement : non calculée dans cette version.")
                         .font(.caption).foregroundStyle(Theme.inkSoft)
                         .cardRow(.bottom)
+                        .id(Capture.endID)
                 } header: { SectionTitle("Activité") }
             }
             .themedList()
+            .scrollsToEndForCapture()
             .navigationTitle("Tendances")
         }
     }

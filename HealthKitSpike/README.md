@@ -31,6 +31,9 @@ xcodebuild -project HealthKitSpike/LivasideSpike.xcodeproj -scheme LivasideSpike
 
 Captures sur simulateur (build Debug) : `-demoMode YES` active la démo et `-captureTab today|meal|trends` ouvre directement un onglet, par exemple
 `xcrun simctl launch <simulateur> com.livaside.healthkitspike -demoMode YES -captureTab trends`.
+En plus : `-captureMode YES` masque le bandeau « Mode démo », `-captureScroll end` cale la liste au-dessus de la barre d’onglets,
+`-captureRange 30` affiche les tendances sur 30 jours et `-captureKeyboard NO` ouvre « Ajouter un repas » sans clavier.
+`scripts/captures.sh` régénère d’un coup les 10 captures App Store et les 6 visuels de la landing, simulateur en français.
 
 L’habillage (direction artistique v1, LIV-17) passe par `Theme.swift` (jetons du designer) et `ThemeComponents.swift` (cartes, titres en New York, axes des graphiques).
 
