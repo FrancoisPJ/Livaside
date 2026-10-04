@@ -6,6 +6,10 @@
 
 > **Amendé par LIV-24** (`amendement-liv4.md`) : portée `nutrition:propose`, chemin retour relais →
 > téléphone par réponse au push, boîte « À valider ». Cet amendement l'emporte en cas de divergence.
+>
+> **Amendement LIV-30 proposé (QUAL-02), soumis au CEO** : garde-fous G1–G3 du push d'instantané
+> complet, §2 « Garde-fous du push » et E4. Ils protègent contre l'ordre, la réduction brutale et la
+> fraîcheur, sans changer E1.
 Ce document fixe la cible et les contraintes que la v1 locale respecte pour ne pas créer d'impasse.
 
 > **Révision 3 : réconciliation finale avec la spec MVP (LIV-2, révision 2) et la validation LIV-9.**
@@ -149,6 +153,81 @@ utile pour le diagnostic ; l'iOS Engineer est libre de la simplifier si elle co�
 Le prix assumé : le relais ne conserve aucun historique antérieur au dernier push. C'est cohérent
 avec « réplique dérivée et jetable » — l'historique vit sur le téléphone et dans Apple Santé.
 
+### Garde-fous du push (amendement LIV-30, QUAL-02, soumis au CEO)
+
+« Remplacer tout » a un mode de panne : un instantané **vide** ou **périmé** remplace une bonne
+projection, sans erreur. Les cas sont ordinaires : accès Santé révoqué (les miroirs se vident par
+suppressions), magasin neuf après un échec de migration (QUAL-01), sauvegarde iPhone restaurée, ou
+deux pushs dont le plus ancien arrive en dernier sur un réseau lent. L'assistant répondrait alors
+« pas de donnée » ou des chiffres d'il y a trois jours, avec assurance. Trois règles ferment ces cas
+sans toucher au principe de l'instantané complet.
+
+**G1 — Ordre : un numéro de séquence par appareil, appliqué par le relais.**
+
+- Chaque push porte `seq`, un entier qui ne fait que croître. Il est **rangé dans le Trousseau avec
+  l'identité relais** (§3), pas dans SwiftData : un magasin neuf ne le remet pas à zéro. Il naît au
+  pairage (v2), ce qui respecte E3.
+- Le relais remplace la projection **seulement si `seq` > dernier `seq` reçu**, en une écriture
+  conditionnelle (`… WHERE last_seq < :seq`). Deux pushs concurrents : un seul gagne, le plus récent.
+- Sinon, refus `stale_snapshot` avec le `last_seq` du relais. Le téléphone règle son compteur à
+  `max(local, last_seq)`, puis renvoie **une fois** un instantané frais. C'est ce qui débloque une
+  sauvegarde restaurée, dont le compteur est en retard : son instantané frais est bien le plus récent.
+- **Pourquoi pas `generatedAt` comme clé d'ordre :** l'horloge de l'iPhone n'est pas monotone
+  (réglage manuel, correction réseau). Elle sert à dater, pas à ordonner.
+
+**G2 — Réduction brutale : le relais garde l'ancienne projection et le téléphone tranche.**
+
+- Le relais compare, **famille par famille** (nuits, séances, mesures, repas), le nombre
+  d'enregistrements reçus à celui de la projection en place. Si une famille avait **au moins 10
+  enregistrements** et en reçoit **moins de la moitié**, le push est refusé : `shrink_detected`, avec
+  les familles et les deux comptes. La projection en place reste servie.
+- **Par famille, pas au global** : un accès Santé révoqué vide le sommeil et les séances alors que les
+  repas restent. Un seuil global ne le verrait pas.
+- **Le téléphone décide, parce que c'est lui la source de vérité.** Il affiche une seule carte, dans
+  l'écran des connexions : « Votre dernier envoi contient 0 nuit de sommeil au lieu de 340. Accès à
+  Santé retiré ? » avec deux gestes : **Envoyer quand même** (repush avec
+  `confirm_shrink: ["sleep"]`, accepté) ou **Garder la version précédente** (rien n'est envoyé ; la
+  carte revient au prochain push si l'écart persiste). Aucune modale, aucun blocage de l'app.
+- Une suppression voulue par l'utilisateur (effacer la moitié de ses repas) passe par la même carte.
+  Le cas est rare : c'est un geste de plus, une fois.
+- Le garde-fou ne s'applique **pas** aux notes en attente (LIV-24) : leur liste se vide normalement.
+  Elles suivent seulement G1. Les accusés de réception et les propositions de la boîte de dépôt sont
+  traités même quand la projection est refusée, puisque la boîte est un objet séparé.
+
+**G3 — Fraîcheur : chaque réponse MCP dit de quand date la donnée.**
+
+- L'instantané porte `generated_at` (instant UTC de construction de l'export, C5). Le relais note
+  `received_at`. La date exposée est `data_as_of = min(generated_at, received_at)` : une horloge
+  d'iPhone en avance ne peut pas faire paraître la donnée plus fraîche qu'elle n'est.
+- **Toute réponse d'outil** porte un en-tête de fraîcheur :
+
+  ```json
+  "freshness": {
+    "data_as_of": "2026-10-04T07:12:00Z",
+    "age_hours": 5,
+    "stale": false,
+    "sync_status": "ok"
+  }
+  ```
+
+  `stale` passe à `true` au-delà de **72 h** sans push accepté. `sync_status` vaut `ok`,
+  `shrink_pending_confirmation` (un push a été refusé par G2 et attend le geste de l'utilisateur) ou
+  `stale_snapshot`. Le dictionnaire de données (§4) explique ces valeurs à l'assistant, qui peut dire
+  « tes données datent d'avant-hier », au lieu de présenter des chiffres anciens comme actuels.
+- **En v1.5 (MCP local)**, il n'y a pas de relais : le serveur local lit le fichier désigné par
+  l'utilisateur et expose le même en-tête, à partir de `generated_at`. `seq` et G2 n'y ont pas
+  d'objet : l'utilisateur a choisi le fichier lui-même.
+
+**Ce que ça coûte.** Côté serveur, une colonne `last_seq`, quatre compteurs par utilisateur et un
+en-tête commun à tous les outils, soit environ une demi-journée dans les 3–4 semaines de la v2. Côté
+app, en v2 : un compteur dans le Trousseau, deux codes de refus à traiter et une carte. **Pour la
+démo, une seule ligne : `generated_at` dans l'enveloppe de l'export C5.** C'est à confirmer avec
+l'iOS Engineer, et sans effet si C5 glisse.
+
+**Ce que ça ferme.** Rien de la promesse. Le relais garde un état de plus (dernier `seq` et
+compteurs), mais ce sont des métadonnées, pas des données de santé. Il reste jetable : si on le vide,
+le premier push suivant passe, puisqu'il n'y a plus de projection à protéger.
+
 ---
 
 ## 3. Comment un assistant externe se connecte
@@ -282,7 +361,7 @@ Plus deux **ressources** MCP (pas des outils) : le **dictionnaire de données** 
 définitions des agrégats) et le **profil** (objectifs, fuseau, unités). L'assistant les lit une fois
 et sait interpréter les chiffres — sans brûler un appel d'outil.
 
-### Trois règles non négociables sur les réponses
+### Quatre règles non négociables sur les réponses
 
 1. **Toute réponse porte ses unités et son fuseau.** Jamais un nombre nu.
 2. **Les trous sont explicites.** Un jour sans donnée renvoie `null` + la raison si on la connaît
@@ -291,6 +370,8 @@ et sait interpréter les chiffres — sans brûler un appel d'outil.
    7 h 12 de moyenne et que l'écran Tendances affiche 7 h 24, l'utilisateur cesse de faire confiance
    aux deux. Cela impose que la **définition** des agrégats journaliers soit écrite une fois, dans
    la spec, et appliquée des deux côtés (contrainte C4, §5).
+4. **Toute réponse porte sa fraîcheur** (`freshness.data_as_of`, `stale`, `sync_status`, §2 G3).
+   L'assistant sait toujours de quand date ce qu'il lit.
 
 ---
 
@@ -379,6 +460,11 @@ ceux des graphiques.
 
 **E3 — Aucun identifiant d'appareil ni d'installation en v1.** L'identifiant de pairage sera créé au
 moment du consentement (v2), stocké dans le Trousseau, et détruit à la révocation.
+
+**E4 — Le relais n'accepte un instantané que s'il est plus récent et pas anormalement réduit**
+(LIV-30, §2 « Garde-fous du push »). `seq` croissant par appareil, refus `shrink_detected` tranché sur
+le téléphone, et `freshness` dans chaque réponse d'outil. Un instantané vide n'efface jamais une
+projection sans un geste de l'utilisateur.
 
 ### 5.7 — Les champs de diagnostic deviennent des états de réponse
 

@@ -23,7 +23,7 @@ réelles est marqué « à confirmer ».
 | Id | Sév. | Constat | Statut |
 |---|---|---|---|
 | QUAL-01 | **Majeur** | Magasin illisible : les repas (donnée non reconstructible) sont mis de côté sans reprise | Sous-ticket |
-| QUAL-02 | **Majeur** | Architecture MCP : un instantané complet vide ou périmé écrase une bonne projection du relais | Sous-ticket |
+| QUAL-02 | **Majeur** | Architecture MCP : un instantané complet vide ou périmé écrase une bonne projection du relais | Contrat amendé (LIV-30, G1–G3), soumis au CEO |
 | QUAL-03 | **Majeur** | Clés de jour figées au fuseau du lancement de l'app | **Corrigé** (branche `qa/cle-jour-fuseau-horaire`) |
 | QUAL-04 | Mineur | Fenêtre de 90 jours : échantillons anciens arrivés tard jamais importés | Ouvert |
 | QUAL-05 | Mineur | Permission refusée indiscernable de « aucune donnée » | À signaler au Head of R&D / Product Designer |
