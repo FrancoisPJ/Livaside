@@ -3,6 +3,9 @@
 # Architecture du service MCP — décision
 
 **Statut : décidé et clos (révision 3, 4 octobre 2026).** Aucun code, aucune infrastructure engagée.
+
+> **Amendé par LIV-24** (`amendement-liv4.md`) : portée `nutrition:propose`, chemin retour relais →
+> téléphone par réponse au push, boîte « À valider ». Cet amendement l'emporte en cas de divergence.
 Ce document fixe la cible et les contraintes que la v1 locale respecte pour ne pas créer d'impasse.
 
 > **Révision 3 : réconciliation finale avec la spec MVP (LIV-2, révision 2) et la validation LIV-9.**
