@@ -3,16 +3,30 @@ import SwiftData
 import SwiftUI
 
 struct LivasideRootView: View {
+    @State private var tab = Self.initialTab
+
     var body: some View {
-        TabView {
+        TabView(selection: $tab) {
             TodayView()
                 .tabItem { Label("Aujourd’hui", systemImage: "sun.max.fill") }
+                .tag("today")
             AddMealView()
                 .tabItem { Label("Ajouter", systemImage: "plus.circle.fill") }
+                .tag("meal")
             TrendsView()
                 .tabItem { Label("Tendances", systemImage: "chart.xyaxis.line") }
+                .tag("trends")
         }
-        .tint(.green)
+        .tint(Theme.sauge)
+    }
+
+    /// Captures d'écran : `-captureTab trends` ouvre directement un onglet (build Debug seulement).
+    private static var initialTab: String {
+        #if DEBUG
+        UserDefaults.standard.string(forKey: "captureTab") ?? "today"
+        #else
+        "today"
+        #endif
     }
 }
 
@@ -41,7 +55,7 @@ private struct TodayView: View {
                                 .font(.headline)
                             Text(lastSyncText)
                                 .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Theme.inkSoft)
                         }
                         Spacer()
                         if !demoMode {
@@ -58,49 +72,64 @@ private struct TodayView: View {
                             .accessibilityLabel("Synchroniser Apple Health")
                         }
                     }
+                    .cardRow(demoMode || health.problem != nil ? .top : .single)
                     if demoMode {
                         Label("Mode démo : données fictives", systemImage: "theatermasks.fill")
-                            .font(.caption).foregroundStyle(.orange)
+                            .font(.caption).foregroundStyle(Theme.inkSoft)
+                            .cardRow(.bottom)
                     } else if let problem = health.problem {
-                        Text(problem).font(.caption).foregroundStyle(.secondary)
+                        Text(problem).font(.caption).foregroundStyle(Theme.inkSoft)
+                            .cardRow(.bottom)
                     }
                 }
 
-                Section("Sommeil") {
-                    MetricRow(icon: "bed.double.fill", title: "Cette nuit", value: hours(today?.sleepHours), detail: today?.sleepHours == nil ? "Aucune donnée de sommeil reçue" : "Durée de sommeil")
-                }
+                Section {
+                    MetricRow(icon: "bed.double.fill", color: Theme.sleep, title: "Cette nuit", value: hours(today?.sleepHours), detail: today?.sleepHours == nil ? "Aucune donnée de sommeil reçue" : "Durée de sommeil")
+                        .cardRow()
+                } header: { SectionTitle("Sommeil") }
 
-                Section("Activité") {
-                    MetricRow(icon: "figure.run", title: "Séances aujourd’hui", value: "\(today?.workoutCount ?? 0)", detail: workoutDetail)
-                }
+                Section {
+                    MetricRow(icon: "figure.run", color: Theme.sport, title: "Séances aujourd’hui", value: "\(today?.workoutCount ?? 0)", detail: workoutDetail)
+                        .cardRow()
+                } header: { SectionTitle("Activité") }
 
-                Section("Poids") {
-                    MetricRow(icon: "scalemass.fill", title: "Dernière mesure", value: kilograms(latestWeighIn?.weightKg), detail: weightDetail)
-                }
+                Section {
+                    MetricRow(icon: "scalemass.fill", color: Theme.weight, title: "Dernière mesure", value: kilograms(latestWeighIn?.weightKg), detail: weightDetail)
+                        .cardRow()
+                } header: { SectionTitle("Poids") }
 
-                Section("Repas") {
+                Section {
                     if todayMeals.isEmpty {
-                        ContentUnavailableView("Aucun repas enregistré", systemImage: "fork.knife", description: Text("Ajoutez un repas en quelques secondes."))
+                        EmptyCard(title: "Aucun repas enregistré", systemImage: "fork.knife", description: "Ajoutez un repas en quelques secondes.")
+                            .cardRow()
                     } else {
                         ForEach(todayMeals) { meal in
                             HStack {
+                                Image(systemName: "fork.knife").foregroundStyle(Theme.nutrition).frame(width: 24)
                                 VStack(alignment: .leading) {
                                     Text(meal.name)
-                                    Text(time(meal.date)).font(.caption).foregroundStyle(.secondary)
+                                    Text(time(meal.date)).font(.caption).foregroundStyle(Theme.inkSoft)
                                 }
                                 Spacer()
-                                Text("\(meal.calories) kcal").foregroundStyle(.secondary)
+                                Text("\(meal.calories) kcal").foregroundStyle(Theme.inkSoft)
                             }
+                            .cardRow(meal.id == todayMeals.first?.id ? .top : .middle)
                         }
                         .onDelete { offsets in
                             for index in offsets { modelContext.delete(todayMeals[index]) }
                             try? modelContext.save()
                         }
-                        Text("Total : \(todayMeals.reduce(0) { $0 + $1.calories }) kcal")
-                            .font(.subheadline.weight(.medium))
+                        HStack {
+                            Text("Total").font(.subheadline.weight(.medium))
+                            Spacer()
+                            Text("\(todayMeals.reduce(0) { $0 + $1.calories }) kcal")
+                                .font(Theme.number(.title3))
+                        }
+                        .cardRow(.bottom)
                     }
-                }
+                } header: { SectionTitle("Repas") }
             }
+            .themedList()
             .navigationTitle("Aujourd’hui")
             .toolbar {
                 Menu {
@@ -163,40 +192,46 @@ private struct AddMealView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Le minimum pour l’enregistrer") {
+                Section {
                     TextField("Ex. Yaourt et granola", text: $name)
                         .textInputAutocapitalization(.sentences)
                         .focused($focus, equals: .name)
                         .submitLabel(.next)
                         .onSubmit { focus = .calories }
+                        .cardRow(.top)
                     TextField("Calories", text: $calories)
                         .keyboardType(.numberPad)
                         .focused($focus, equals: .calories)
+                        .cardRow(.middle)
                     DatePicker("Heure", selection: $date, displayedComponents: [.date, .hourAndMinute])
-                }
+                        .cardRow(.bottom)
+                } header: { SectionTitle("Le minimum pour l’enregistrer") }
                 if !recentMeals.isEmpty {
-                    Section("Récents") {
-                        ForEach(recentMeals) { meal in
+                    Section {
+                        ForEach(Array(recentMeals.enumerated()), id: \.element.id) { index, meal in
                             Button { reuse(meal) } label: {
                                 HStack {
-                                    Text(meal.name).foregroundStyle(.primary)
+                                    Text(meal.name).foregroundStyle(Theme.ink)
                                     Spacer()
-                                    Text("\(meal.calories) kcal").foregroundStyle(.secondary)
+                                    Text("\(meal.calories) kcal").foregroundStyle(Theme.inkSoft)
                                 }
                             }
+                            .cardRow(.at(index, of: recentMeals.count))
                         }
-                    }
+                    } header: { SectionTitle("Récents") }
                 }
-                Section("Macros (facultatif)") {
-                    macroField("Protéines", value: $protein)
-                    macroField("Glucides", value: $carbs)
-                    macroField("Lipides", value: $fat)
-                }
+                Section {
+                    macroField("Protéines", value: $protein).cardRow(.top)
+                    macroField("Glucides", value: $carbs).cardRow(.middle)
+                    macroField("Lipides", value: $fat).cardRow(.bottom)
+                } header: { SectionTitle("Macros (facultatif)") }
                 if let lastSaved {
                     Label("\(lastSaved) enregistré", systemImage: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
+                        .foregroundStyle(Theme.sauge)
+                        .cardRow()
                 }
             }
+            .themedList()
             .navigationTitle("Ajouter un repas")
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
@@ -222,7 +257,7 @@ private struct AddMealView: View {
             Text(label)
             Spacer()
             TextField("0", text: value).keyboardType(.decimalPad).multilineTextAlignment(.trailing)
-            Text("g").foregroundStyle(.secondary)
+            Text("g").foregroundStyle(Theme.inkSoft)
         }
     }
     private func reuse(_ meal: Meal) {
@@ -273,40 +308,91 @@ private struct TrendsView: View {
                         Text("30 jours").tag(30)
                     }
                     .pickerStyle(.segmented)
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets())
                 }
-                trendSection(title: "Sommeil", systemImage: "bed.double.fill", unit: "h", maxGapDays: 1, values: data.compactMap { snapshot in snapshot.sleepHours.map { TrendPoint(day: snapshot.day, value: $0) } })
-                trendSection(title: "Poids", systemImage: "scalemass.fill", unit: "kg", maxGapDays: 7, values: data.compactMap { snapshot in snapshot.weightKg.map { TrendPoint(day: snapshot.day, value: $0) } })
-                Section("Activité") {
+                let sleep = data.compactMap { snapshot in snapshot.sleepHours.map { TrendPoint(day: snapshot.day, value: $0) } }
+                trendSection(title: "Sommeil", systemImage: "bed.double.fill", color: Theme.sleep, unit: "h", values: sleep) {
+                    sleepChart(sleep)
+                }
+                let weight = data.compactMap { snapshot in snapshot.weightKg.map { TrendPoint(day: snapshot.day, value: $0) } }
+                trendSection(title: "Poids", systemImage: "scalemass.fill", color: Theme.weight, unit: "kg", values: weight) {
+                    weightChart(weight)
+                }
+                Section {
                     let workouts = data.reduce(0) { $0 + $1.workoutCount }
                     let minutes = data.reduce(0.0) { $0 + $1.workoutMinutes }
-                    Label("\(workouts) séance\(workouts > 1 ? "s" : "") · \(Int(minutes)) min actives", systemImage: "figure.run")
+                    Label {
+                        Text("\(workouts) séance\(workouts > 1 ? "s" : "") · \(Int(minutes)) min actives")
+                            .font(Theme.number(.body))
+                    } icon: {
+                        Image(systemName: "figure.run").foregroundStyle(Theme.sport)
+                    }
+                    .cardRow(.top)
                     Text("Charge d’entraînement : non calculée dans cette version.")
-                        .font(.caption).foregroundStyle(.secondary)
-                }
+                        .font(.caption).foregroundStyle(Theme.inkSoft)
+                        .cardRow(.bottom)
+                } header: { SectionTitle("Activité") }
             }
+            .themedList()
             .navigationTitle("Tendances")
         }
     }
 
-    @ViewBuilder private func trendSection(title: String, systemImage: String, unit: String, maxGapDays: Int, values: [TrendPoint]) -> some View {
-        Section(title) {
+    @ViewBuilder private func trendSection<C: View>(title: String, systemImage: String, color: Color, unit: String, values: [TrendPoint], @ViewBuilder chart: () -> C) -> some View {
+        Section {
             if values.isEmpty {
-                ContentUnavailableView("Pas encore de données", systemImage: systemImage, description: Text("Les données Apple Health apparaîtront ici après synchronisation."))
+                EmptyCard(title: "Pas encore de données", systemImage: systemImage, description: "Les données Apple Health apparaîtront ici après synchronisation.")
+                    .cardRow()
             } else {
-                Chart(segmented(values, maxGapDays: maxGapDays)) { point in
-                    // La courbe s'interrompt sur un trou : une nuit manquante, ou une semaine sans pesée.
-                    LineMark(x: .value("Jour", point.day), y: .value(title, point.value), series: .value("Segment", point.segment))
-                        .interpolationMethod(.catmullRom)
-                        .foregroundStyle(.green)
-                    PointMark(x: .value("Jour", point.day), y: .value(title, point.value))
-                        .foregroundStyle(.green)
+                VStack(alignment: .leading, spacing: Theme.spacing(2)) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Moyenne des jours renseignés")
+                            .font(.caption).foregroundStyle(Theme.inkSoft)
+                        Text("\(average(values).formatted(.number.precision(.fractionLength(1)))) \(unit)")
+                            .font(Theme.number(.title2))
+                    }
+                    chart()
+                        .themedChartAxes()
+                        .frame(height: 150)
                 }
-                .chartYScale(domain: .automatic(includesZero: false))
-                .frame(height: 150)
-                Text("Moyenne des jours renseignés : \(average(values).formatted(.number.precision(.fractionLength(1)))) \(unit)")
-                    .font(.caption).foregroundStyle(.secondary)
+                .padding(.vertical, Theme.spacing(1))
+                .cardRow()
+            }
+        } header: {
+            Label {
+                Text(title).foregroundStyle(Theme.inkSoft)
+            } icon: {
+                Image(systemName: systemImage).foregroundStyle(color)
             }
         }
+    }
+
+    /// Une barre par nuit renseignée : une nuit manquante reste un espace vide.
+    private func sleepChart(_ values: [TrendPoint]) -> some View {
+        Chart {
+            ForEach(values) { point in
+                BarMark(x: .value("Jour", point.day, unit: .day), y: .value("Sommeil", point.value))
+                    .foregroundStyle(Theme.sleep)
+                    .clipShape(UnevenRoundedRectangle(topLeadingRadius: 4, topTrailingRadius: 4, style: .continuous))
+            }
+            RuleMark(y: .value("Repère", 8))
+                .foregroundStyle(Theme.inkSoft)
+                .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
+                .accessibilityLabel("Repère 8 h")
+        }
+    }
+
+    private func weightChart(_ values: [TrendPoint]) -> some View {
+        Chart(segmented(values, maxGapDays: 7)) { point in
+            // La courbe s'interrompt après une semaine sans pesée.
+            LineMark(x: .value("Jour", point.day), y: .value("Poids", point.value), series: .value("Segment", point.segment))
+                .interpolationMethod(.catmullRom)
+                .foregroundStyle(Theme.weight)
+            PointMark(x: .value("Jour", point.day), y: .value("Poids", point.value))
+                .foregroundStyle(Theme.weight)
+        }
+        .chartYScale(domain: .automatic(includesZero: false))
     }
 
     private func segmented(_ values: [TrendPoint], maxGapDays: Int) -> [TrendPoint] {
@@ -335,20 +421,34 @@ private struct TrendPoint: Identifiable {
     var id: Date { day }
 }
 
+private struct EmptyCard: View {
+    let title: String
+    let systemImage: String
+    let description: String
+    var body: some View {
+        ContentUnavailableView {
+            Label(title, systemImage: systemImage)
+        } description: {
+            Text(description).foregroundStyle(Theme.inkSoft)
+        }
+    }
+}
+
 private struct MetricRow: View {
     let icon: String
+    let color: Color
     let title: String
     let value: String
     let detail: String
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: icon).foregroundStyle(.green).frame(width: 24)
+            Image(systemName: icon).foregroundStyle(color).frame(width: 24)
             VStack(alignment: .leading) {
                 Text(title)
-                Text(detail).font(.caption).foregroundStyle(.secondary)
+                Text(detail).font(.caption).foregroundStyle(Theme.inkSoft)
             }
             Spacer()
-            Text(value).font(.headline.monospacedDigit())
+            Text(value).font(Theme.number(.title2))
         }
     }
 }

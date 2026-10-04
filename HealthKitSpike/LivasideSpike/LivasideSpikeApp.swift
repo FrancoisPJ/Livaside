@@ -7,6 +7,7 @@ struct LivasideSpikeApp: App {
     @StateObject private var health: HealthKitSync
 
     init() {
+        Theme.applyNavigationBarFonts()
         let container = LivasideStore.openLocalContainer()
         let health = HealthKitSync(container: container)
         modelContainer = container

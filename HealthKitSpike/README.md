@@ -29,6 +29,11 @@ xcodebuild -project HealthKitSpike/LivasideSpike.xcodeproj -scheme LivasideSpike
   -sdk iphoneos -configuration Debug CODE_SIGNING_ALLOWED=NO build
 ```
 
+Captures sur simulateur (build Debug) : `-demoMode YES` active la démo et `-captureTab today|meal|trends` ouvre directement un onglet, par exemple
+`xcrun simctl launch <simulateur> com.livaside.healthkitspike -demoMode YES -captureTab trends`.
+
+L’habillage (direction artistique v1, LIV-17) passe par `Theme.swift` (jetons du designer) et `ThemeComponents.swift` (cartes, titres en New York, axes des graphiques).
+
 Les fichiers `HealthKitProbe.swift`, `SpikeView.swift` et `Report.swift` viennent du spike LIV-3. Seuls les helpers d’intervalles de `Report.swift` servent encore à l’app.
 
 ---
