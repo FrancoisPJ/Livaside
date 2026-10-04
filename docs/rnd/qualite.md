@@ -22,7 +22,7 @@ réelles est marqué « à confirmer ».
 
 | Id | Sév. | Constat | Statut |
 |---|---|---|---|
-| QUAL-01 | **Majeur** | Magasin illisible : les repas (donnée non reconstructible) sont mis de côté sans reprise | Sous-ticket |
+| QUAL-01 | **Majeur** | Magasin illisible : les repas (donnée non reconstructible) sont mis de côté sans reprise | **Corrigé** (LIV-29) |
 | QUAL-02 | **Majeur** | Architecture MCP : un instantané complet vide ou périmé écrase une bonne projection du relais | Contrat amendé (LIV-30, G1–G3), soumis au CEO |
 | QUAL-03 | **Majeur** | Clés de jour figées au fuseau du lancement de l'app | **Corrigé** (branche `qa/cle-jour-fuseau-horaire`) |
 | QUAL-04 | Mineur | Fenêtre de 90 jours : échantillons anciens arrivés tard jamais importés | Ouvert |
@@ -43,6 +43,15 @@ réelles est marqué « à confirmer ».
   dans le magasin neuf ; (2) ne pas faire de `fatalError` : repli en mémoire avec bandeau d'alerte ;
   (3) test de migration sur un magasin d'une version précédente. Demi-journée à une journée : sous-ticket
   pour l'iOS Engineer.
+- **Correctif (LIV-29).** `StoreRecovery.swift` : les fichiers du magasin illisible sont déplacés
+  ensemble, sous leurs noms d'origine, dans `Livaside-illisible-<horodatage>/` (le `-wal`, qui contient
+  les derniers repas, reste ainsi lisible ; tout ou rien, pour qu'aucun `-wal` orphelin ne soit rejoué sur
+  le magasin neuf). Les `Meal` sont relus en SQLite sur une copie temporaire, indépendamment du schéma,
+  et réimportés avec leurs identifiants. Si le magasin ne peut être ni déplacé ni recréé : repli en
+  mémoire avec les repas relus, plus de `fatalError`. Une alerte prévient l'utilisateur dans les deux cas.
+  Tests `StoreRecoveryTests` (paquet `QATests`) sur un magasin d'une version précédente dont la migration
+  échoue réellement (`calories` texte puis entier). **Limite** : seuls les `Meal` sont relus ; les lignes
+  du journal `FoodEntry` (LIV-22) ne le sont pas encore, à ajouter quand leur schéma sera figé.
 
 ### QUAL-02 — Instantané complet : écrasement par du vide ou du périmé (majeur, conception)
 

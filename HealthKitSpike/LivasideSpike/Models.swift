@@ -133,23 +133,12 @@ enum LivasideStore {
     /// SwiftData activerait CloudKit tout seul si un entitlement iCloud apparaissait sur le target.
     static let localConfiguration = ModelConfiguration(schema: schema, cloudKitDatabase: .none)
 
-    /// Ouvre le stockage local. S'il est illisible (migration ratée d'une ancienne version), il est mis
-    /// de côté plutôt que supprimé, et l'app repart d'un stockage neuf au lieu de planter au lancement.
-    /// Santé se réimporte ; seuls les repas restent dans la copie mise de côté.
-    static func openLocalContainer() -> ModelContainer {
-        if let container = try? ModelContainer(for: schema, configurations: localConfiguration) {
-            return container
-        }
-        let storeURL = localConfiguration.url
-        let suffix = "unreadable-\(Int(Date.now.timeIntervalSince1970))"
-        for extensionSuffix in ["", "-shm", "-wal"] {
-            let file = URL(fileURLWithPath: storeURL.path + extensionSuffix)
-            try? FileManager.default.moveItem(at: file, to: file.appendingPathExtension(suffix))
-        }
-        do {
-            return try ModelContainer(for: schema, configurations: localConfiguration)
-        } catch {
-            fatalError("Impossible d'ouvrir le stockage local Livaside : \(error.localizedDescription)")
-        }
+    /// Ouvre le stockage local sans jamais planter au lancement (voir `open(_:)`, QUAL-01).
+    static func openLocalContainer() -> OpenedStore {
+        let opened = open(localConfiguration)
+        // Les repas saisis sur l'ancien écran rejoignent le journal. Un échec n'empêche pas
+        // l'ouverture : les `Meal` restent intacts et la reprise sera retentée au prochain lancement.
+        try? MealMigration.run(in: ModelContext(opened.container))
+        return opened
     }
 }
