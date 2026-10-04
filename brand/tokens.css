@@ -1,0 +1,36 @@
+:root {
+  --font-title: ui-serif, "New York", "Iowan Old Style", Georgia, serif;
+  --font-number: ui-rounded, "SF Pro Rounded", system-ui;
+  --font-text: system-ui, -apple-system;
+  
+  --radius: 20px;
+  
+  /* Light mode colors */
+  --color-bg: #F6F3EE;
+  --color-surface: #FFFFFF;
+  --color-ink: #1C1B19;
+  --color-ink-soft: #6B675F;
+  --color-line: #E4DFD6;
+  --color-sauge: #3F6B4E;
+  
+  --color-sleep: #5A5FC4;
+  --color-sport: #C8643C;
+  --color-nutrition: #4E8F5F;
+  --color-weight: #3A74A8;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #141413;
+    --color-surface: #1F1E1C;
+    --color-ink: #F3F0EA;
+    --color-ink-soft: #A8A39A;
+    --color-line: #2E2C29;
+    --color-sauge: #8FBF9C;
+    
+    --color-sleep: #9A9DF2;
+    --color-sport: #EE9A74;
+    --color-nutrition: #86C496;
+    --color-weight: #82B3DE;
+  }
+}
