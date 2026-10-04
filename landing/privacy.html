@@ -6,20 +6,13 @@
 <title>Livaside — Politique de confidentialité</title>
 <meta name="robots" content="noindex">
 <style>
+  @import url("../brand/tokens.css");
   :root {
-    --bg:#fbfaf8; --surface:#ffffff; --border:#e6e2db;
-    --ink:#1b1a18; --ink-soft:#5c5852; --ink-faint:#8b857d;
-    --font-text:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
     --measure:34rem;
   }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg:#14150f; --surface:#1c1d17; --border:#2f3129;
-      --ink:#f0eee8; --ink-soft:#b2ada3; --ink-faint:#857f75;
-    }
-  }
+  
   body {
-    margin:0; background:var(--bg); color:var(--ink);
+    margin:0; background:var(--color-bg); color:var(--color-ink);
     font-family:var(--font-text);
     font-size:17px; line-height:1.6;
     -webkit-font-smoothing:antialiased;
@@ -30,7 +23,7 @@
   p, ul { margin:0 0 1rem; }
   ul { padding-left: 1.5rem; }
   a { color:inherit; text-decoration:underline; text-underline-offset:2px; }
-  .soft { color:var(--ink-soft); }
+  .soft { color:var(--color-ink-soft); }
 </style>
 </head>
 <body>

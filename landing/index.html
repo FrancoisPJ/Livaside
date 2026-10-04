@@ -23,6 +23,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Livaside — sommeil, sport et alimentation dans une seule app</title>
+<link rel="icon" type="image/svg+xml" href="img/symbol-livaside-light.svg">
+<link rel="icon" type="image/svg+xml" href="img/symbol-livaside-dark.svg" media="(prefers-color-scheme: dark)">
 <meta name="description" content="Livaside réunit votre sommeil, votre sport et votre alimentation dans une seule app iOS, connectée à Apple Health, avec des graphiques clairs. En construction — rejoignez la liste d'attente.">
 <meta name="robots" content="noindex">
 <!-- noindex volontaire tant que la page n'est pas validée. À retirer à la publication. -->
@@ -34,40 +36,20 @@
      PALETTE ET TYPOGRAPHIE — selon les maquettes du Product Designer (LIV-7).
      ------------------------------------------------------------------ */
 
-  /* (1) CLAIR — valeurs par défaut */
-  :root{
-    --bg:#f2f2f7; --surface:#ffffff; --border:#c6c6c8;
-    --ink:#000000; --ink-soft:rgba(60,60,67,0.6); --ink-faint:rgba(60,60,67,0.3);
-    --accent:#34c759; --accent-ink:#ffffff;
+  @import url("../brand/tokens.css");
 
-    /* Typographie — alignée sur le système de LIV-7 (SF Pro) */
-    --font-text:system-ui,-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    --font-title:system-ui,-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-
-    --radius:16px;
-    --measure:34rem;      /* colonne de lecture */
-    --measure-wide:54rem; /* colonne des captures */
+  :root {
+    --measure:34rem;
+    --measure-wide:54rem;
   }
 
-  /* (2) SOMBRE — un seul jeu de valeurs, appliqué par préférence système
-     ou par l'attribut data-theme. */
-  @media (prefers-color-scheme: dark){
-    :root:not([data-theme="light"]){
-      --bg:#000000; --surface:#1c1c1e; --border:#38383a;
-      --ink:#ffffff; --ink-soft:rgba(235,235,245,0.6); --ink-faint:rgba(235,235,245,0.3);
-      --accent:#32d74b; --accent-ink:#000000;
-    }
-  }
-  :root[data-theme="dark"]{
-    --bg:#000000; --surface:#1c1c1e; --border:#38383a;
-    --ink:#ffffff; --ink-soft:rgba(235,235,245,0.6); --ink-faint:rgba(235,235,245,0.3);
-    --accent:#32d74b; --accent-ink:#000000;
-  }
+  
+  
 
   *,*::before,*::after{box-sizing:border-box}
   html{-webkit-text-size-adjust:100%}
   body{
-    margin:0; background:var(--bg); color:var(--ink);
+    margin:0; background:var(--color-bg); color:var(--color-ink);
     font-family:var(--font-text);
     font-size:17px; line-height:1.6;
     -webkit-font-smoothing:antialiased;
@@ -76,7 +58,7 @@
   a{color:inherit}
 
   .wrap{max-width:var(--measure); margin:0 auto; padding:0 1.5rem}
-  section{padding:3.5rem 0; border-top:1px solid var(--border)}
+  section{padding:3.5rem 0; border-top:1px solid var(--color-line)}
   section:first-of-type{border-top:0}
 
   h1,h2,h3{font-family:var(--font-title)}
@@ -85,15 +67,15 @@
   h3{font-size:1rem; margin:0 0 .25rem; font-weight:600}
   p{margin:0 0 1rem}
   p:last-child{margin-bottom:0}
-  .lead{font-size:1.1875rem; color:var(--ink-soft)}
-  .soft{color:var(--ink-soft)}
-  .faint{color:var(--ink-faint); font-size:.9375rem}
+  .lead{font-size:1.1875rem; color:var(--color-ink-soft)}
+  .soft{color:var(--color-ink-soft)}
+  .faint{color:var(--color-ink-soft); font-size:.9375rem}
 
   /* En-tête */
   header{padding:2.5rem 0 0}
   .brand{display:flex; align-items:baseline; gap:.625rem}
   .brand strong{font-size:1.0625rem; font-weight:600; letter-spacing:-.01em}
-  .brand span{font-size:.875rem; color:var(--ink-faint)}
+  .brand span{font-size:.875rem; color:var(--color-ink-soft)}
 
   /* Hero */
   .hero{padding-top:2rem}
@@ -104,40 +86,40 @@
   .row{display:flex; gap:.5rem; flex-wrap:wrap}
   input[type=email]{
     flex:1 1 15rem; min-width:0;
-    font:inherit; color:var(--ink);
+    font:inherit; color:var(--color-ink);
     padding:.75rem .875rem;
-    background:var(--surface);
-    border:1px solid var(--border); border-radius:var(--radius);
+    background:var(--color-surface);
+    border:1px solid var(--color-line); border-radius:var(--radius);
   }
-  input[type=email]::placeholder{color:var(--ink-faint)}
-  input[type=email]:focus-visible{outline:2px solid var(--accent); outline-offset:1px; border-color:var(--accent)}
+  input[type=email]::placeholder{color:var(--color-ink-soft)}
+  input[type=email]:focus-visible{outline:2px solid var(--color-sauge); outline-offset:1px; border-color:var(--color-sauge)}
   button{
     font:inherit; font-weight:500; cursor:pointer;
     padding:.75rem 1.25rem;
-    color:var(--accent-ink); background:var(--accent);
-    border:1px solid var(--accent); border-radius:var(--radius);
+    color:#FFFFFF; background:var(--color-sauge);
+    border:1px solid var(--color-sauge); border-radius:var(--radius);
   }
   button:hover{opacity:.9}
-  button:focus-visible{outline:2px solid var(--ink); outline-offset:2px}
+  button:focus-visible{outline:2px solid var(--color-ink); outline-offset:2px}
   button[disabled]{opacity:.55; cursor:default}
-  .note{margin-top:.75rem; color:var(--ink-faint); font-size:.875rem; line-height:1.5}
+  .note{margin-top:.75rem; color:var(--color-ink-soft); font-size:.875rem; line-height:1.5}
   .feedback{margin-top:.875rem; font-size:.9375rem; min-height:1.4em}
-  .feedback[data-state="ok"]{color:var(--accent)}
-  .feedback[data-state="err"]{color:var(--ink)}
+  .feedback[data-state="ok"]{color:var(--color-sauge)}
+  .feedback[data-state="err"]{color:var(--color-ink)}
 
   /* Listes */
   .items{display:grid; gap:1.5rem; margin:0; padding:0; list-style:none}
-  .items p{margin:0; color:var(--ink-soft); font-size:.9375rem}
+  .items p{margin:0; color:var(--color-ink-soft); font-size:.9375rem}
 
   .status{display:grid; gap:.75rem; margin:0; padding:0; list-style:none}
   .status li{display:flex; gap:.75rem; align-items:baseline; font-size:.9375rem}
   .tag{
     flex:0 0 auto; font-size:.75rem; letter-spacing:.02em;
     padding:.1875rem .5rem; border-radius:999px;
-    border:1px solid var(--border); color:var(--ink-soft);
+    border:1px solid var(--color-line); color:var(--color-ink-soft);
     white-space:nowrap;
   }
-  .tag.now{border-color:var(--accent); color:var(--accent)}
+  .tag.now{border-color:var(--color-sauge); color:var(--color-sauge)}
 
   /* Aperçu — captures des écrans réels.
      Les fichiers n'existent pas encore (voir la section #apercu). */
@@ -149,26 +131,26 @@
   .shots figure{margin:0}
   .shots img{
     width:100%; border-radius:1.75rem;
-    border:1px solid var(--border); background:var(--surface);
+    border:1px solid var(--color-line); background:var(--color-surface);
     aspect-ratio:1320/2868;   /* réserve la place avant chargement */
   }
-  .shots figcaption{margin-top:.75rem; font-size:.9375rem; color:var(--ink-soft)}
-  .shots figcaption strong{display:block; color:var(--ink); font-weight:600}
+  .shots figcaption{margin-top:.75rem; font-size:.9375rem; color:var(--color-ink-soft)}
+  .shots figcaption strong{display:block; color:var(--color-ink); font-weight:600}
 
   /* Exemple de question */
   .example{
     margin:1.25rem 0 0; padding:1rem 1.125rem;
-    background:var(--surface); border:1px solid var(--border);
+    background:var(--color-surface); border:1px solid var(--color-line);
     border-radius:var(--radius);
   }
   .example p{margin:0; font-size:.9375rem}
-  .example p + p{margin-top:.625rem; color:var(--ink-soft)}
+  .example p + p{margin-top:.625rem; color:var(--color-ink-soft)}
   .example .who{
     display:block; font-size:.75rem; letter-spacing:.04em;
-    text-transform:uppercase; color:var(--ink-faint); margin-bottom:.1875rem;
+    text-transform:uppercase; color:var(--color-ink-soft); margin-bottom:.1875rem;
   }
 
-  footer{padding:2.5rem 0 3.5rem; border-top:1px solid var(--border); color:var(--ink-faint); font-size:.875rem}
+  footer{padding:2.5rem 0 3.5rem; border-top:1px solid var(--color-line); color:var(--color-ink-soft); font-size:.875rem}
   footer a{text-decoration:underline; text-underline-offset:2px}
 </style>
 </head>
@@ -176,7 +158,10 @@
 
 <header>
   <div class="wrap">
-    <p class="brand"><strong>Livaside</strong> <span>en construction</span></p>
+    <p class="brand"><picture>
+      <source srcset="img/logo-livaside-dark.svg" media="(prefers-color-scheme: dark)">
+      <img src="img/logo-livaside-light.svg" alt="Livaside" height="24" style="height: 24px;">
+    </picture> <span>en construction</span></p>
   </div>
 </header>
 
