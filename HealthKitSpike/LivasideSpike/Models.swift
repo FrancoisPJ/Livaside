@@ -114,21 +114,20 @@ final class SyncState {
 
 enum LivasideDate {
     static let calendar = Calendar.autoupdatingCurrent
-    static let keyFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.calendar = calendar
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.timeZone = calendar.timeZone
-        formatter.dateFormat = "yyyy-MM-dd"
-        return formatter
-    }()
 
-    static func key(for date: Date) -> String { keyFormatter.string(from: date) }
+    /// Jour calendaire (`yyyy-MM-dd`) dans le fuseau *actuel* de l'utilisateur. Calculé depuis le
+    /// calendrier auto-actualisé à chaque appel : un formateur statique garderait le fuseau du
+    /// lancement de l'app et décalerait les jours après un voyage.
+    static func key(for date: Date) -> String {
+        let parts = calendar.dateComponents([.year, .month, .day], from: date)
+        return String(format: "%04d-%02d-%02d", parts.year!, parts.month!, parts.day!)
+    }
     static func startOfDay(_ date: Date) -> Date { calendar.startOfDay(for: date) }
 }
 
 enum LivasideStore {
-    static let schema = Schema([Meal.self, HealthRecord.self, HealthAnchor.self, DailyHealthSnapshot.self, SyncState.self])
+    static let schema = Schema([Meal.self, HealthRecord.self, HealthAnchor.self, DailyHealthSnapshot.self, SyncState.self,
+                                Food.self, Recipe.self, RecipeIngredient.self, FoodEntry.self, MealNote.self])
 
     /// Jamais iCloud : les données de santé ne quittent pas l'iPhone (guideline 5.1.3(ii), LIV-5).
     /// SwiftData activerait CloudKit tout seul si un entitlement iCloud apparaissait sur le target.
