@@ -1,0 +1,503 @@
+<!doctype html>
+<!--
+  Livaside — landing page + liste d'attente
+  Page statique, sans dépendance, sans tracker. Ouvrable en double-clic.
+
+  AVANT MISE EN LIGNE — à régler (voir content.md, §7) :
+  1. FORM_ENDPOINT ci-dessous : l'adresse qui reçoit les e-mails.
+     Tant qu'elle est vide, le formulaire bascule sur un envoi par e-mail (mailto).
+     Aucun compte n'a été créé, aucune dépense engagée.
+  2. Le bloc « Vos données » et la mention sous le formulaire :
+     validés par Privacy & Compliance (LIV-10).
+  3. La section « À quoi ça ressemble » (#apercu) est en place mais masquée
+     (`hidden`) : il n'y a pas encore de captures. Déposer les fichiers dans
+     landing/img/ et retirer l'attribut. Visuels commandés au Product Designer (LIV-13).
+  4. La palette et la typographie du :root sont appliquées selon les
+     maquettes du Product Designer (LIV-7).
+
+  Les variantes de formulation (titres, explication de l'accès IA, etc.) sont
+  dans content.md. Celles retenues ici sont les options « A » recommandées.
+-->
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Livaside — sommeil, sport et alimentation dans une seule app</title>
+<meta name="description" content="Livaside réunit votre sommeil, votre sport et votre alimentation dans une seule app iOS, connectée à Apple Health, avec des graphiques clairs. En construction — rejoignez la liste d'attente.">
+<meta name="robots" content="noindex">
+<!-- noindex volontaire tant que la page n'est pas validée. À retirer à la publication. -->
+<meta property="og:title" content="Livaside">
+<meta property="og:description" content="Sommeil, sport et alimentation dans une seule app. La santé à vos côtés, pas devant vous.">
+<meta property="og:type" content="website">
+<style>
+  /* ------------------------------------------------------------------
+     PALETTE ET TYPOGRAPHIE — selon les maquettes du Product Designer (LIV-7).
+     ------------------------------------------------------------------ */
+
+  /* (1) CLAIR — valeurs par défaut */
+  :root{
+    --bg:#f2f2f7; --surface:#ffffff; --border:#c6c6c8;
+    --ink:#000000; --ink-soft:rgba(60,60,67,0.6); --ink-faint:rgba(60,60,67,0.3);
+    --accent:#34c759; --accent-ink:#ffffff;
+
+    /* Typographie — alignée sur le système de LIV-7 (SF Pro) */
+    --font-text:system-ui,-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --font-title:system-ui,-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+
+    --radius:16px;
+    --measure:34rem;      /* colonne de lecture */
+    --measure-wide:54rem; /* colonne des captures */
+  }
+
+  /* (2) SOMBRE — un seul jeu de valeurs, appliqué par préférence système
+     ou par l'attribut data-theme. */
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#000000; --surface:#1c1c1e; --border:#38383a;
+      --ink:#ffffff; --ink-soft:rgba(235,235,245,0.6); --ink-faint:rgba(235,235,245,0.3);
+      --accent:#32d74b; --accent-ink:#000000;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#000000; --surface:#1c1c1e; --border:#38383a;
+    --ink:#ffffff; --ink-soft:rgba(235,235,245,0.6); --ink-faint:rgba(235,235,245,0.3);
+    --accent:#32d74b; --accent-ink:#000000;
+  }
+
+  *,*::before,*::after{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:var(--font-text);
+    font-size:17px; line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  img{max-width:100%; height:auto; display:block}
+  a{color:inherit}
+
+  .wrap{max-width:var(--measure); margin:0 auto; padding:0 1.5rem}
+  section{padding:3.5rem 0; border-top:1px solid var(--border)}
+  section:first-of-type{border-top:0}
+
+  h1,h2,h3{font-family:var(--font-title)}
+  h1{font-size:clamp(2rem,6vw,2.75rem); line-height:1.15; letter-spacing:-.02em; margin:0 0 1rem; font-weight:600}
+  h2{font-size:1.1875rem; line-height:1.35; letter-spacing:-.01em; margin:0 0 .75rem; font-weight:600}
+  h3{font-size:1rem; margin:0 0 .25rem; font-weight:600}
+  p{margin:0 0 1rem}
+  p:last-child{margin-bottom:0}
+  .lead{font-size:1.1875rem; color:var(--ink-soft)}
+  .soft{color:var(--ink-soft)}
+  .faint{color:var(--ink-faint); font-size:.9375rem}
+
+  /* En-tête */
+  header{padding:2.5rem 0 0}
+  .brand{display:flex; align-items:baseline; gap:.625rem}
+  .brand strong{font-size:1.0625rem; font-weight:600; letter-spacing:-.01em}
+  .brand span{font-size:.875rem; color:var(--ink-faint)}
+
+  /* Hero */
+  .hero{padding-top:2rem}
+  .hero .lead{max-width:30rem}
+
+  /* Formulaire */
+  form{margin:1.75rem 0 0}
+  .row{display:flex; gap:.5rem; flex-wrap:wrap}
+  input[type=email]{
+    flex:1 1 15rem; min-width:0;
+    font:inherit; color:var(--ink);
+    padding:.75rem .875rem;
+    background:var(--surface);
+    border:1px solid var(--border); border-radius:var(--radius);
+  }
+  input[type=email]::placeholder{color:var(--ink-faint)}
+  input[type=email]:focus-visible{outline:2px solid var(--accent); outline-offset:1px; border-color:var(--accent)}
+  button{
+    font:inherit; font-weight:500; cursor:pointer;
+    padding:.75rem 1.25rem;
+    color:var(--accent-ink); background:var(--accent);
+    border:1px solid var(--accent); border-radius:var(--radius);
+  }
+  button:hover{opacity:.9}
+  button:focus-visible{outline:2px solid var(--ink); outline-offset:2px}
+  button[disabled]{opacity:.55; cursor:default}
+  .note{margin-top:.75rem; color:var(--ink-faint); font-size:.875rem; line-height:1.5}
+  .feedback{margin-top:.875rem; font-size:.9375rem; min-height:1.4em}
+  .feedback[data-state="ok"]{color:var(--accent)}
+  .feedback[data-state="err"]{color:var(--ink)}
+
+  /* Listes */
+  .items{display:grid; gap:1.5rem; margin:0; padding:0; list-style:none}
+  .items p{margin:0; color:var(--ink-soft); font-size:.9375rem}
+
+  .status{display:grid; gap:.75rem; margin:0; padding:0; list-style:none}
+  .status li{display:flex; gap:.75rem; align-items:baseline; font-size:.9375rem}
+  .tag{
+    flex:0 0 auto; font-size:.75rem; letter-spacing:.02em;
+    padding:.1875rem .5rem; border-radius:999px;
+    border:1px solid var(--border); color:var(--ink-soft);
+    white-space:nowrap;
+  }
+  .tag.now{border-color:var(--accent); color:var(--accent)}
+
+  /* Aperçu — captures des écrans réels.
+     Les fichiers n'existent pas encore (voir la section #apercu). */
+  .wrap-wide{max-width:var(--measure-wide); margin:0 auto; padding:0 1.5rem}
+  .shots{
+    display:grid; gap:2rem 1.5rem; margin:1.75rem 0 0; padding:0; list-style:none;
+    grid-template-columns:repeat(auto-fit,minmax(13rem,1fr));
+  }
+  .shots figure{margin:0}
+  .shots img{
+    width:100%; border-radius:1.75rem;
+    border:1px solid var(--border); background:var(--surface);
+    aspect-ratio:1320/2868;   /* réserve la place avant chargement */
+  }
+  .shots figcaption{margin-top:.75rem; font-size:.9375rem; color:var(--ink-soft)}
+  .shots figcaption strong{display:block; color:var(--ink); font-weight:600}
+
+  /* Exemple de question */
+  .example{
+    margin:1.25rem 0 0; padding:1rem 1.125rem;
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius);
+  }
+  .example p{margin:0; font-size:.9375rem}
+  .example p + p{margin-top:.625rem; color:var(--ink-soft)}
+  .example .who{
+    display:block; font-size:.75rem; letter-spacing:.04em;
+    text-transform:uppercase; color:var(--ink-faint); margin-bottom:.1875rem;
+  }
+
+  footer{padding:2.5rem 0 3.5rem; border-top:1px solid var(--border); color:var(--ink-faint); font-size:.875rem}
+  footer a{text-decoration:underline; text-underline-offset:2px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <p class="brand"><strong>Livaside</strong> <span>en construction</span></p>
+  </div>
+</header>
+
+<main>
+
+  <!-- 1. Hero -->
+  <section class="hero">
+    <div class="wrap">
+      <h1>Sommeil, sport et alimentation&nbsp;: une seule app.</h1>
+      <p class="lead">
+        Livaside réunit ce que vous suivez aujourd'hui dans trois apps différentes.
+        Connectée à Apple&nbsp;Health, avec des graphiques lisibles. La santé à vos côtés,
+        pas devant vous.
+      </p>
+
+      <form id="waitlist" novalidate>
+        <div class="row">
+          <input id="email" name="email" type="email" inputmode="email" autocomplete="email"
+                 placeholder="vous@exemple.com" required
+                 aria-label="Adresse e-mail" aria-describedby="form-note">
+          <button type="submit">Être prévenu</button>
+        </div>
+        <!-- MENTION D'INFORMATION — obligatoire à chaque point de collecte (RGPD).
+             Texte définitif validé par Privacy Texte provisoire : la version définitive vient de LIV-10 (Privacy & Compliance). Compliance (LIV-10).
+             Si vous modifiez ce texte, modifiez aussi celui du second formulaire plus bas. -->
+        <p class="note" id="form-note">
+          Votre adresse e-mail servira uniquement à vous prévenir du lancement (aucune revente).
+          Elle sera supprimée ensuite. Vous gardez le contrôle de vos données (accès, modification, suppression).
+          <a href="privacy.html" style="text-decoration:underline">Politique de confidentialité</a>.
+        </p>
+        <p class="feedback" id="feedback" role="status" aria-live="polite"></p>
+      </form>
+    </div>
+  </section>
+
+  <!-- 2. Le constat -->
+  <section>
+    <div class="wrap">
+      <h2>Pourquoi on la construit</h2>
+      <p class="soft">
+        Suivre son sommeil, son sport et ses repas demande aujourd'hui trois ou quatre apps,
+        des saisies à la main et une discipline que peu de gens tiennent. Au bout de quelques
+        semaines, on arrête — et les données accumulées ne servent plus à rien.
+      </p>
+      <p class="soft">
+        Livaside part de l'inverse&nbsp;: le moins de temps possible demandé, une seule vue
+        d'ensemble.
+      </p>
+    </div>
+  </section>
+
+  <!-- 3. Les trois piliers -->
+  <section>
+    <div class="wrap">
+      <h2>Ce qu'elle réunit</h2>
+      <ul class="items">
+        <li>
+          <h3>Le suivi, sans la corvée</h3>
+          <p>
+            Sommeil, séances et poids arrivent depuis Apple&nbsp;Health automatiquement.
+            Les repas se saisissent à la main, rapidement.
+          </p>
+        </li>
+        <li>
+          <h3>Des graphiques qui se lisent</h3>
+          <p>
+            Vos tendances sur la durée&nbsp;: l'évolution de vos nuits, de vos séances, de votre
+            poids. De quoi voir où vous en êtes en quelques secondes, sans décoder un tableau
+            de bord.
+          </p>
+        </li>
+        <li>
+          <h3>Vos données, ouvertes à votre assistant</h3>
+          <p>
+            Vous pourrez donner à l'IA que vous utilisez déjà l'accès à vos données, pour lui
+            poser vos questions directement. Détails juste en dessous.
+          </p>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 3 bis. Aperçu — les trois écrans réels.
+       ÉTAT : en attente des visuels. La section porte `hidden`, elle ne
+       s'affiche donc pas. Pour l'activer : déposer les six fichiers dans
+       `landing/img/` puis retirer l'attribut `hidden` ci-dessous.
+       Rien d'autre à changer.
+
+       Fichiers attendus (1320 × 2868, iPhone 6,9", mêmes données que les
+       captures App Store — voir content.md §6) :
+         img/ecran-aujourdhui-clair.png   img/ecran-aujourdhui-sombre.png
+         img/ecran-tendances-clair.png    img/ecran-tendances-sombre.png
+         img/ecran-repas-clair.png        img/ecran-repas-sombre.png
+
+       Les versions « sombre » sont servies automatiquement aux visiteurs
+       en thème sombre. Si elles manquent, retirer les trois <source>. -->
+  <section id="apercu">
+    <div class="wrap-wide">
+      <h2>À quoi ça ressemble</h2>
+      <p class="soft">Trois écrans, et c'est toute l'app.</p>
+
+      <ul class="shots">
+        <li>
+          <figure>
+            <picture>
+              <source srcset="img/ecran-aujourdhui-sombre.png" media="(prefers-color-scheme: dark)">
+              <img src="img/ecran-aujourdhui-clair.png" width="1320" height="2868" loading="lazy"
+                   alt="Écran Aujourd'hui : quatre cartes — sommeil de la nuit, séances du jour, dernier poids, repas et calories.">
+            </picture>
+            <figcaption>
+              <strong>Aujourd'hui</strong>
+              Votre nuit, vos séances, votre poids et vos repas du jour. Sur un écran.
+            </figcaption>
+          </figure>
+        </li>
+        <li>
+          <figure>
+            <picture>
+              <source srcset="img/ecran-tendances-sombre.png" media="(prefers-color-scheme: dark)">
+              <img src="img/ecran-tendances-clair.png" width="1320" height="2868" loading="lazy"
+                   alt="Écran Tendances : graphiques du sommeil, du poids, du volume d'entraînement et des calories sur 30 jours.">
+            </picture>
+            <figcaption>
+              <strong>Tendances</strong>
+              Sur 7 ou 30 jours. Les jours sans donnée restent vides&nbsp;: ils ne sont jamais
+              comptés comme des zéros.
+            </figcaption>
+          </figure>
+        </li>
+        <li>
+          <figure>
+            <picture>
+              <source srcset="img/ecran-repas-sombre.png" media="(prefers-color-scheme: dark)">
+              <img src="img/ecran-repas-clair.png" width="1320" height="2868" loading="lazy"
+                   alt="Saisie d'un repas : raccourcis vers les repas récents, nom, moment de la journée et calories.">
+            </picture>
+            <figcaption>
+              <strong>Ajouter un repas</strong>
+              Le seul endroit où vous saisissez quelque chose. Les repas habituels se reprennent
+              en un geste.
+            </figcaption>
+          </figure>
+        </li>
+      </ul>
+
+      <p class="note">
+        Captures de la version en construction&nbsp;: l'interface peut encore changer d'ici la
+        sortie.
+      </p>
+    </div>
+  </section>
+
+  <!-- 4. Le différenciateur (MCP, sans le terme) -->
+  <section>
+    <div class="wrap">
+      <h2>Vos données, accessibles à l'IA de votre choix</h2>
+      <p class="soft">
+        La plupart des apps santé ajoutent leur propre assistant, avec ses réponses toutes
+        faites. Livaside fait l'inverse&nbsp;: elle rendra vos données lisibles par l'outil que
+        vous avez déjà choisi — Claude, ChatGPT ou un autre. Vous l'interrogez comme vous en
+        avez l'habitude, il va chercher dans vos données.
+      </p>
+
+      <div class="example">
+        <p><span class="who">Vous</span>Est-ce que je dors mieux les semaines où je m'entraîne le matin&nbsp;?</p>
+        <p><span class="who">Votre assistant</span>Il lit vos nuits et vos séances des trois derniers mois, et vous répond.</p>
+      </div>
+
+      <p class="note">
+        Livaside n'embarque pas d'assistant et ne donne aucun conseil&nbsp;: elle fournit les
+        données, l'outil qui les lit est le vôtre. Techniquement, c'est un serveur MCP — un
+        branchement standard que ces outils savent déjà utiliser. Vous décidez si vous
+        l'activez, et vous pouvez le couper.
+      </p>
+    </div>
+  </section>
+
+  <!-- 5. Honnêteté sur l'état d'avancement -->
+  <section>
+    <div class="wrap">
+      <h2>Où en est le développement</h2>
+      <p class="soft">On préfère le dire franchement&nbsp;: l'app n'est pas encore sortie.</p>
+      <ul class="status">
+        <li><span class="tag now">en cours</span><span>Suivi du sommeil, des séances et du poids depuis Apple&nbsp;Health</span></li>
+        <li><span class="tag now">en cours</span><span>Saisie des repas et graphiques de tendances</span></li>
+        <li><span class="tag">ensuite</span><span>L'accès pour votre assistant IA</span></li>
+        <li><span class="tag">ensuite</span><span>Export de vos données</span></li>
+      </ul>
+      <p class="note">
+        Pas de date annoncée tant qu'on n'en est pas sûrs. Vous recevrez un e-mail quand il y
+        aura quelque chose à installer.
+      </p>
+    </div>
+  </section>
+
+  <!-- 6. Données — à faire valider par LIV-5
+       L'argument « rien ne quitte l'appareil » vient de LIV-5 (document policy, §5.2).
+       RÉSERVE À TENIR : il devient faux le jour où un SDK d'analytics, un backend ou un
+       MCP hébergé apparaît. D'où le « aujourd'hui » — ne pas le retirer, et relire ce
+       bloc à chaque changement d'architecture. -->
+  <section>
+    <div class="wrap">
+      <h2>Vos données vous appartiennent</h2>
+      <p class="soft">
+        Pas de compte à créer. Pas de serveur&nbsp;: vos données de santé restent sur votre
+        iPhone. Elles ne sont ni revendues, ni partagées — il n'y a personne à qui les envoyer.
+      </p>
+      <p class="soft">
+        Sur l'App&nbsp;Store, «&nbsp;collecter&nbsp;» veut dire transmettre des données hors de
+        l'appareil. Aujourd'hui, Livaside n'en transmet aucune. C'est vérifiable&nbsp;: regardez
+        la rubrique «&nbsp;Confidentialité de l'app&nbsp;» des apps de santé que vous utilisez,
+        et comparez.
+      </p>
+      <p class="note">
+        La seule donnée qu'on vous demande, c'est l'adresse e-mail de cette liste d'attente.
+        Elle reste en dehors de l'app, et sert uniquement à vous prévenir.
+      </p>
+    </div>
+  </section>
+
+  <!-- 7. Rappel formulaire -->
+  <section>
+    <div class="wrap">
+      <h2>Vous voulez suivre la suite&nbsp;?</h2>
+      <p class="soft">Laissez votre adresse. Un e-mail à la sortie, et c'est tout.</p>
+      <form id="waitlist-2" novalidate>
+        <div class="row">
+          <input id="email-2" name="email" type="email" inputmode="email" autocomplete="email"
+                 placeholder="vous@exemple.com" required
+                 aria-label="Adresse e-mail" aria-describedby="form-note-2">
+          <button type="submit">Être prévenu</button>
+        </div>
+        <!-- Même mention qu'en haut de page : elle doit figurer à chaque point de collecte. -->
+        <p class="note" id="form-note-2">
+          Votre adresse e-mail servira uniquement à vous prévenir du lancement (aucune revente).
+          Elle sera supprimée ensuite. Vous gardez le contrôle de vos données (accès, modification, suppression).
+          <a href="privacy.html" style="text-decoration:underline">Politique de confidentialité</a>.
+        </p>
+        <p class="feedback" id="feedback-2" role="status" aria-live="polite"></p>
+      </form>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>
+      Livaside — <em>live aside</em>, la santé à vos côtés.<br>
+      <a href="mailto:CONTACT@EXEMPLE.COM">Nous écrire</a>
+      —
+      <a href="privacy.html">Confidentialité</a>
+      <!-- Adresse de contact à renseigner. -->
+    </p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+
+  // Adresse qui reçoit les inscriptions. Vide = bascule sur un envoi par e-mail.
+  // Doit accepter un POST (JSON ou form-encoded) avec le champ `email`.
+  var FORM_ENDPOINT = "";
+  var CONTACT_EMAIL = "CONTACT@EXEMPLE.COM";
+
+  function valid(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v); }
+
+  function wire(formId, inputId, feedbackId){
+    var form = document.getElementById(formId);
+    if (!form) return;
+    var input = document.getElementById(inputId);
+    var out = document.getElementById(feedbackId);
+    var button = form.querySelector("button");
+
+    function say(msg, state){
+      out.textContent = msg;
+      out.setAttribute("data-state", state);
+    }
+
+    form.addEventListener("submit", function(e){
+      e.preventDefault();
+      var email = input.value.trim();
+
+      if (!valid(email)) {
+        say("Cette adresse ne semble pas valide.", "err");
+        input.focus();
+        return;
+      }
+
+      // Pas d'endpoint configuré : on ouvre le client mail de la personne.
+      if (!FORM_ENDPOINT) {
+        window.location.href = "mailto:" + CONTACT_EMAIL +
+          "?subject=" + encodeURIComponent("Liste d'attente Livaside") +
+          "&body=" + encodeURIComponent("Prévenez-moi à : " + email);
+        say("Votre logiciel de messagerie s'ouvre pour envoyer la demande.", "ok");
+        return;
+      }
+
+      button.disabled = true;
+      say("Envoi…", "");
+
+      fetch(FORM_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        body: JSON.stringify({ email: email, source: "landing" })
+      }).then(function(res){
+        if (!res.ok) throw new Error(res.status);
+        form.querySelector(".row").hidden = true;
+        say("C'est noté. Vous recevrez un e-mail à la sortie.", "ok");
+      }).catch(function(){
+        button.disabled = false;
+        say("L'envoi a échoué. Réessayez, ou écrivez-nous à " + CONTACT_EMAIL + ".", "err");
+      });
+    });
+  }
+
+  wire("waitlist", "email", "feedback");
+  wire("waitlist-2", "email-2", "feedback-2");
+})();
+</script>
+
+</body>
+</html>
